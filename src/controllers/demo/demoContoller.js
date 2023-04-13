@@ -1,12 +1,30 @@
 const APIResponseFormat = require('../../utils/APIResponseFormat.js');
 const DemoService = require('../../services/demo/demoServices.js');
-const EventEmitters = require('events');
 const { _doDecrypt } = require('../../utils/encryption.js');
 
+const EventEmitters = require('events');
 const event = new EventEmitters();
+
+event.on("getData", () => {
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> All Demos are fetched");
+});
+
+event.on("addData", () => {
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> New Demo is added");
+});
+
+event.on("updateData", () => {
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Demo is updated");
+});
+
+event.on("deleteData", () => {
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Demo is deleted");
+});
+
 
 
 const getData = async (req, res) => {
+    event.emit("getData");
     try {
         const data = await DemoService.getData();
         return APIResponseFormat._ResDataFound(res, data);
@@ -16,6 +34,7 @@ const getData = async (req, res) => {
 }
 
 const addData = async (req, res) => {
+    event.emit("addData");
     try {
         let { name, email, age } = req.body;
         // check all fields are required or not
@@ -68,6 +87,7 @@ const addData = async (req, res) => {
 }
 
 const updateData = async (req, res) => {
+    event.emit("updateData");
     try {
         let { name, age} = req.body;
         let user_id = req.header('user_id')
@@ -93,6 +113,7 @@ const updateData = async (req, res) => {
 }
 
 const deleteData = async (req, res) => {
+    event.emit("deleteData");
     try {  
         let user_id = req.header('user_id')
         if(!user_id){
