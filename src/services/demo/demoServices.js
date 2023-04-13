@@ -1,7 +1,7 @@
 const db = require("../../db/models/index");
 const Demo = db.demo;
 
-const demo = async (req, res) => {
+const getData = async (req, res) => {
     try {
         const demo = await Demo.findAll();
         return demo
@@ -10,7 +10,7 @@ const demo = async (req, res) => {
     }
 }
 
-const addDemo = async (demo) => {
+const addData = async (demo) => {
     try {
         const newDemo = await Demo.create(demo);
         return newDemo
@@ -45,9 +45,7 @@ const checkUserExists = async (id) => {
     }
 }
 
-
-
-const updateDemo = async (id, demo) => {
+const updateData = async (id, demo) => {
     try {
         const updatedDemo = await Demo.update(demo, {
             where: {
@@ -60,7 +58,7 @@ const updateDemo = async (id, demo) => {
     }
 }
 
-const deleteDemo = async (id) => {
+const deleteData = async (id) => {
     try {
         const deletedDemo = await Demo.destroy({
             where: {
@@ -73,11 +71,42 @@ const deleteDemo = async (id) => {
     }
 }
 
+const isEmailExist = async (email) => {
+    try {
+        const demo = await Demo.findOne({
+            where: {
+                email: email
+            },
+            paranoid: false
+        });
+        return demo
+    } catch (error) {
+        throw error;
+    }
+}
+
+const restoreData = async (id) => {
+    try {
+        const restoreDemo = await Demo.restore({
+            where: {
+                id: id
+            }
+        });
+        return restoreDemo
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+
 module.exports = {
-    demo,
-    addDemo,
-    updateDemo,
-    deleteDemo ,
+    getData ,
+    addData ,
+    updateData ,
+    deleteData ,
     checkEmailExists ,
-    checkUserExists
+    checkUserExists ,
+    isEmailExist ,
+    restoreData
 }

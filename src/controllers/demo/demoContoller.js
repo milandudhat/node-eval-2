@@ -1,56 +1,73 @@
 const APIResponseFormat = require('../../utils/APIResponseFormat.js');
 const DemoService = require('../../services/demo/demoServices.js');
-const { _doEncrypt , _doDecrypt } = require('../../utils/encryption.js');
-const EventEmitter = require('events');
-const eventEmitter = new EventEmitter();
+const EventEmitters = require('events');
+const { _doDecrypt } = require('../../utils/encryption.js');
+
+const event = new EventEmitters();
 
 
-
-const demo = async (req, res) => {
+const getData = async (req, res) => {
     try {
-        const demo = await DemoService.demo();
-        return APIResponseFormat._ResDataFound(res, demo);
+        const data = await DemoService.getData();
+        return APIResponseFormat._ResDataFound(res, data);
     } catch (error) {
         return APIResponseFormat._ResServerError(res, error);
     }
 }
 
-const addDemo = async (req, res) => {
+const addData = async (req, res) => {
     try {
-        const { name, age , email } = req.body;
+        let { name, email, age } = req.body;
+        // check all fields are required or not
+        
         if(!name){
             return APIResponseFormat._ResMissingRequiredField(res, "Name is required");
-        }
-        if(!age){
-            return APIResponseFormat._ResMissingRequiredField(res, "Age is required");
         }
         if(!email){
             return APIResponseFormat._ResMissingRequiredField(res, "Email is required");
         }
-        let emailRegex = /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/;
-        if(!emailRegex.test(email)){
-            return APIResponseFormat._ResInvalidEmail(res);
+        if(!age){
+            return APIResponseFormat._ResMissingRequiredField(res, "Age is required");
         }
 
-        // check user exista with name or email
-        const emailExists = await DemoService.checkEmailExists(email);
-        if(emailExists){
-            return APIResponseFormat._ResUserAlreadyExists(res);
+        // check email is valid or not
+        const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if (!regex.test(email)) {
+            return APIResponseFormat._ResMissingRequiredField(res, "Email is not valid");
         }
-        
-        const data = {
-            name,
-            age ,
-            email
+
+        // check email is exist or not
+        const isEmailExist = await DemoService.isEmailExist(email);
+        if (isEmailExist) {
+            // check deleted_at is null or not
+            if(isEmailExist.deleted_at === null){
+                return APIResponseFormat._ResDataAlreadyExists(res, "Email is already exist");
+            }else{
+                // restore demo
+                const demo = await DemoService.restoreData(isEmailExist.id);
+                if (!demo) {
+                    return APIResponseFormat._ResDataNotFound(res);
+                }
+                return APIResponseFormat._ResDataCreated(res);
+            }
+        }else{
+            let data = {
+                name,
+                email,
+                age
+            }
+            const demo = await DemoService.addData(data);
+            if (!demo) {
+                return APIResponseFormat._ResDataNotFound(res);
+            }
+            return APIResponseFormat._ResDataFound(res, demo);
         }
-        const newDemo = await DemoService.addDemo(data);
-        return APIResponseFormat._ResDataCreated(res, newDemo);
     } catch (error) {
         return APIResponseFormat._ResServerError(res, error);
     }
 }
 
-const updateDemo = async (req, res) => {
+const updateData = async (req, res) => {
     try {
         let { name, age} = req.body;
         let user_id = req.header('user_id')
@@ -68,14 +85,14 @@ const updateDemo = async (req, res) => {
             name,
             age ,
         }
-        const updatedDemo = await DemoService.updateDemo(user_id, data);
-        return APIResponseFormat._ResDataUpdated(res, updatedDemo);
+        const updatedData = await DemoService.updateData(user_id, data);
+        return APIResponseFormat._ResDataUpdated(res, updatedData);
     } catch (error) {
         return APIResponseFormat._ResServerError(res, error);
     }
 }
 
-const deleteDemo = async (req, res) => {
+const deleteData = async (req, res) => {
     try {  
         let user_id = req.header('user_id')
         if(!user_id){
@@ -88,9 +105,7 @@ const deleteDemo = async (req, res) => {
         if(!userExists){
             return APIResponseFormat._ResUserDoesNotExist(res);
         }
-
-
-        const deletedDemo = await DemoService.deleteDemo(user_id);
+        const deletedDemo = await DemoService.deleteData(user_id);
         return APIResponseFormat._ResDataDeleted(res, deletedDemo);
     } catch (error) {
         return APIResponseFormat._ResServerError(res, error);
@@ -98,8 +113,8 @@ const deleteDemo = async (req, res) => {
 }
 
 module.exports = {
-    demo,
-    addDemo,
-    updateDemo,
-    deleteDemo
+    getData ,
+    addData ,
+    updateData ,
+    deleteData
 }

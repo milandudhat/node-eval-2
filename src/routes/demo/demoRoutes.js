@@ -10,9 +10,10 @@ const eventEmitter = new EventEmitter();
 
 
 
-router.get('/', demoContoller.demo);
-router.post('/', demoContoller.addDemo);
-router.put('/', demoContoller.updateDemo);
-router.delete('/', demoContoller.deleteDemo);
+
+router.get('/', demoContoller.getData);
+router.post('/', demoContoller.addData);
+router.put('/', demoContoller.updateData);
+router.delete('/', demoContoller.deleteData);
 
 module.exports = router;
